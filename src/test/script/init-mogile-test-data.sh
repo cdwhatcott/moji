@@ -5,6 +5,16 @@ KEY_PREFIX=${test.moji.key.prefix}
 CLASS=${test.moji.class.a}
 IFS=$'\n';
 
+# For durable write test
+function disable_replicate {
+  echo -e "\n\n\033[32m[WARN] The test will disable replicate worker. Please enable it manually after test.\033[0m\n\n"
+  host=$(echo $TRACKERS | cut -f1 -d:)
+  port=$(echo $TRACKERS | cut -f2 -d:)
+  # Use netcat-openbsd. May not support old versions: 1.89-3ubuntu2 is not ok; 1.105-7ubuntu1 is ok.
+  echo '!want 0 replicate' | nc $host $port
+}
+
+
 function clear_test_data {
   KEYS=`moglistkeys $KEY_PREFIX --trackers=$TRACKERS --domain=$DOMAIN`
 
@@ -51,4 +61,6 @@ upload_new_random_file getPaths
 upload_file fileOfKnownSize data/fileOfKnownSize.dat
 upload_file attributes data/fileOfKnownSize.dat
 upload_file mogileFileCopyToFile data/mogileFileCopyToFile.dat
+
+disable_replicate
 exit 0

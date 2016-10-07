@@ -22,6 +22,7 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.util.Set;
 
+import fm.last.moji.WriteStrategy;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -65,6 +66,11 @@ public class SpringMojiBeanTest {
   @Test
   public void getFileWithStorageClass() {
     assertNotNull(bean.getFile("123", "class"));
+  }
+
+  @Test
+  public void getFileWithDurableWrite() {
+    assertNotNull(bean.getFile("123", "class", WriteStrategy.DURABLE));
   }
 
 }

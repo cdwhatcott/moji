@@ -46,14 +46,21 @@ class MojiFileImpl implements MojiFile {
   private Executor executor;
   private String storageClass;
   private String key;
+  private boolean durableWrite;
 
   MojiFileImpl(String key, String domain, String storageClass, TrackerFactory trackerFactory,
-      HttpConnectionFactory httpFactory) {
+    HttpConnectionFactory httpFactory) {
+    this(key, domain, storageClass, trackerFactory, httpFactory, false);
+  }
+
+  MojiFileImpl(String key, String domain, String storageClass, TrackerFactory trackerFactory,
+    HttpConnectionFactory httpFactory, boolean durableWrite) {
     this.key = key;
     this.domain = domain;
     this.storageClass = storageClass;
     this.trackerFactory = trackerFactory;
     this.httpFactory = httpFactory;
+    this.durableWrite = durableWrite;
     executor = new Executor(trackerFactory);
     lock = new ReentrantReadWriteLock();
   }
@@ -134,7 +141,7 @@ class MojiFileImpl implements MojiFile {
       Lock writeLock = lock.writeLock();
       writeLock.lock();
       GetOutputStreamCommand command = new GetOutputStreamCommand(trackerFactory, httpFactory, key, domain,
-          storageClass, writeLock);
+          storageClass, durableWrite, writeLock);
       executor.executeCommand(command);
       outputStream = command.getOutputStream();
       log.debug("getOutputStream() -> {}", outputStream);

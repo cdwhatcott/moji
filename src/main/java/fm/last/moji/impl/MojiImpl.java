@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
+import fm.last.moji.WriteStrategy;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +61,16 @@ class MojiImpl implements Moji {
     }
     log.debug("new {}() with storage class", MojiFileImpl.class.getSimpleName());
     return new MojiFileImpl(key, domain, storageClass, trackerFactory, httpFactory);
+  }
+
+  @Override
+  public MojiFile getFile(String key, String storageClass, WriteStrategy writeStrategy) {
+    if (storageClass == null) {
+      throw new IllegalArgumentException("storageClass == null");
+    }
+    log.debug("new {}() with storage class and writeStrategy", MojiFileImpl.class.getSimpleName());
+    return new MojiFileImpl(key, domain, storageClass, trackerFactory, httpFactory,
+      (writeStrategy == WriteStrategy.DURABLE));
   }
 
   @Override

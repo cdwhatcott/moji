@@ -28,6 +28,7 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
+import fm.last.moji.WriteStrategy;
 import org.apache.commons.lang.StringUtils;
 
 import fm.last.moji.Moji;
@@ -102,6 +103,11 @@ public class SpringMojiBean implements Moji {
   @Override
   public MojiFile getFile(String key, String storageClass) {
     return moji.getFile(key, storageClass);
+  }
+
+  @Override
+  public MojiFile getFile(String key, String storageClass, WriteStrategy writeStrategy) {
+    return moji.getFile(key, storageClass, writeStrategy);
   }
 
   @Override

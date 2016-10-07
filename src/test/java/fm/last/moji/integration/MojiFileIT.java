@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
+import fm.last.moji.WriteStrategy;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.junit.Rule;
@@ -75,6 +76,34 @@ public class MojiFileIT extends AbstractMojiIT {
     assertTrue(newFile.exists());
     assertEquals(newFile.getAttributes().getStorageClass(), storageClassA);
 
+    assertEquals(data, downloadDataFromMogileFile(newFile));
+  }
+
+  @Test
+  public void writeNewWithDurableWriteStrategyThenReadBack() throws Exception {
+    MojiFile newFile = getFile(newKey(), storageClassDevcount2, WriteStrategy.DURABLE);
+    assertFalse(newFile.exists());
+
+    String data = newData();
+
+    writeDataToMogileFile(newFile, data);
+    assertTrue(newFile.exists());
+    // mogilefs replicate worker is paused by init script, so the assert can really validate the durable write behavior
+    // here.
+    assertEquals(2, newFile.getPaths().size());
+    assertEquals(data, downloadDataFromMogileFile(newFile));
+  }
+
+  @Test
+  public void writeNewWithDefaultWriteStrategyThenReadBack() throws Exception {
+    MojiFile newFile = getFile(newKey(), storageClassDevcount2, WriteStrategy.DEFAULT);
+    assertFalse(newFile.exists());
+
+    String data = newData();
+
+    writeDataToMogileFile(newFile, data);
+    assertTrue(newFile.exists());
+    assertEquals(1, newFile.getPaths().size());
     assertEquals(data, downloadDataFromMogileFile(newFile));
   }
 

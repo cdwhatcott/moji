@@ -29,6 +29,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -67,19 +68,30 @@ public class MojiFileImplTest {
   @Mock
   private HttpURLConnection mockUrlConnection;
   @Mock
+  private HttpURLConnection mockUrlConnection2;
+  @Mock
   private InputStream mockInputStream;
   @Mock
   private OutputStream mockOutputStream;
   @Mock
+  private OutputStream mockOutputStream2;
+  @Mock
   private InetSocketAddress mockAddress;
 
   private MojiFileImpl file;
+
+  private MojiFileImpl fileDurableWrite;
+
+  private MojiFileImpl fileDefaultWrite;
 
   @Before
   public void init() throws TrackerException {
     when(mockTrackerFactory.getTracker()).thenReturn(mockTracker);
     when(mockTrackerFactory.getAddresses()).thenReturn(Collections.singleton(mockAddress));
     file = new MojiFileImpl(KEY, DOMAIN, STORAGE_CLASS, mockTrackerFactory, mockHttpFactory);
+    fileDurableWrite = new MojiFileImpl(KEY, DOMAIN, STORAGE_CLASS, mockTrackerFactory, mockHttpFactory, true);
+    fileDefaultWrite = new MojiFileImpl(KEY, DOMAIN, STORAGE_CLASS, mockTrackerFactory, mockHttpFactory, false);
+
   }
 
   @Test
@@ -208,6 +220,19 @@ public class MojiFileImplTest {
     assertThat(captor.getValue().key, is(KEY));
     assertThat(captor.getValue().domain, is(DOMAIN));
     assertThat(captor.getValue().storageClass, is(STORAGE_CLASS));
+    assertThat(captor.getValue().quorumSize, is(1));
+  }
+
+  @Test
+  public void getOutputStreamCommandDurableWrite() throws IOException {
+    fileDurableWrite.setExecutor(mockExecutor);
+    fileDurableWrite.getOutputStream();
+    ArgumentCaptor<GetOutputStreamCommand> captor = ArgumentCaptor.forClass(GetOutputStreamCommand.class);
+    verify(mockExecutor).executeCommand(captor.capture());
+    assertThat(captor.getValue().key, is(KEY));
+    assertThat(captor.getValue().domain, is(DOMAIN));
+    assertThat(captor.getValue().storageClass, is(STORAGE_CLASS));
+    assertThat(captor.getValue().quorumSize, is(2));
   }
 
   @Test
@@ -221,6 +246,40 @@ public class MojiFileImplTest {
 
     // check that whatever we have delegates to the expected stream
     OutputStream outputStream = file.getOutputStream();
+    byte[] myBuffer = new byte[2];
+    outputStream.write(myBuffer, 3, 5);
+    verify(mockOutputStream).write(myBuffer, 3, 5);
+  }
+
+  @Test
+  public void getOutputStreamCommandReturnDurableWrite() throws IOException {
+    List<URL> paths = Arrays.asList(new URL("http://localhost:80/"), new URL("http://localhost:81/"));
+    List<Destination> destinations = Arrays.asList(new Destination(paths.get(0), 2, 4),
+      new Destination(paths.get(1), 3, 4));
+    when(mockTracker.createOpen(KEY, DOMAIN, STORAGE_CLASS)).thenReturn(destinations);
+    when(mockHttpFactory.newConnection(paths.get(0))).thenReturn(mockUrlConnection);
+    when(mockHttpFactory.newConnection(paths.get(1))).thenReturn(mockUrlConnection2);
+    when(mockUrlConnection.getOutputStream()).thenReturn(mockOutputStream);
+    when(mockUrlConnection2.getOutputStream()).thenReturn(mockOutputStream2);
+
+    // check that whatever we have delegates to the expected stream
+    OutputStream outputStream = fileDurableWrite.getOutputStream();
+    byte[] myBuffer = new byte[2];
+    outputStream.write(myBuffer, 3, 5);
+    verify(mockOutputStream).write(myBuffer, 3, 5);
+    verify(mockOutputStream2).write(myBuffer, 3, 5);
+  }
+
+  @Test
+  public void getOutputStreamCommandReturnDefaultWrite() throws IOException {
+    List<URL> paths = Arrays.asList(new URL("http://localhost:80/"));
+    List<Destination> destinations = Arrays.asList(new Destination(paths.get(0), 2, 4));
+    when(mockTracker.createOpen(KEY, DOMAIN, STORAGE_CLASS)).thenReturn(destinations);
+    when(mockHttpFactory.newConnection(paths.get(0))).thenReturn(mockUrlConnection);
+    when(mockUrlConnection.getOutputStream()).thenReturn(mockOutputStream);
+
+    // check that whatever we have delegates to the expected stream
+    OutputStream outputStream = fileDefaultWrite.getOutputStream();
     byte[] myBuffer = new byte[2];
     outputStream.write(myBuffer, 3, 5);
     verify(mockOutputStream).write(myBuffer, 3, 5);

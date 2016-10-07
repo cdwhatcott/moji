@@ -23,6 +23,8 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -227,6 +229,24 @@ public class TrackerImplTest {
     assertThat(request.getArguments().get("size"), is(Long.toString(SIZE)));
     assertThat(request.getArguments().get("devid"), is("23"));
     assertThat(request.getArguments().get("path"), is("http://www.last.fm/1/"));
+    assertThat(request.getArguments().get("fid"), is("32"));
+  }
+
+  @Test
+  public void createCloseRequestMultiDestination() throws Exception {
+    List<Destination> destinations = Arrays.asList(new Destination(new URL("http://www.last.fm/1/"), 23, 32L),
+      new Destination(new URL("http://www.last.fm/2/"), 24, 32L));
+    tracker.createClose(KEY, DOMAIN, destinations, SIZE);
+    Request request = requestCaptor.getValue();
+    assertThat(request.getCommand(), is("create_close"));
+    assertThat(request.getArguments().size(), is(9));
+    assertThat(request.getArguments().get("domain"), is(DOMAIN));
+    assertThat(request.getArguments().get("key"), is(KEY));
+    assertThat(request.getArguments().get("size"), is(Long.toString(SIZE)));
+    assertThat(request.getArguments().get("devid_1"), is("23"));
+    assertThat(request.getArguments().get("devid_2"), is("24"));
+    assertThat(request.getArguments().get("path_1"), is("http://www.last.fm/1/"));
+    assertThat(request.getArguments().get("path_2"), is("http://www.last.fm/2/"));
     assertThat(request.getArguments().get("fid"), is("32"));
   }
 

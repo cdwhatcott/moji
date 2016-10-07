@@ -31,47 +31,41 @@ import fm.last.moji.tracker.TrackerFactory;
 
 class GetOutputStreamCommand implements MojiCommand {
 
-  private static final Logger log = LoggerFactory.getLogger(GetOutputStreamCommand.class);
-
   final String key;
   final String domain;
   final String storageClass;
+  final int quorumSize;
   private final TrackerFactory trackerFactory;
   private final HttpConnectionFactory httpFactory;
   private OutputStream stream;
   private final Lock writeLock;
 
   GetOutputStreamCommand(TrackerFactory trackerFactory, HttpConnectionFactory httpFactory, String key, String domain,
-      String storageClass, Lock writeLock) {
+    String storageClass, boolean durableWrite, Lock writeLock) {
     this.trackerFactory = trackerFactory;
     this.httpFactory = httpFactory;
     this.key = key;
     this.domain = domain;
     this.storageClass = storageClass;
+    this.quorumSize = durableWrite ? 2:1;
     this.writeLock = writeLock;
   }
 
   @Override
   public void executeWithTracker(Tracker tracker) throws IOException {
     List<Destination> destinations = tracker.createOpen(key, domain, storageClass);
-    if (destinations.isEmpty()) {
-      throw new TrackerException("Failed to obtain destinations for domain=" + domain + ",key=" + key
+    if (destinations.size() < quorumSize) {
+      throw new TrackerException("Failed to obtain sufficient destinations for domain=" + domain + ",key=" + key
           + ",storageClass=" + storageClass);
     }
-    IOException lastException = null;
-    for (Destination destination : destinations) {
-      log.debug("Creating output stream to: {}", destination);
-      try {
-        stream = new FileUploadOutputStream(trackerFactory, httpFactory, key, domain, destination, writeLock);
-        return;
-      } catch (IOException e) {
-        log.debug("Failed to open output -> {}", destination);
-        log.debug("Exception was: ", e);
-        lastException = e;
-        IOUtils.closeQuietly(stream);
-      }
+
+    try {
+      stream = new FileUploadOutputStream(trackerFactory, httpFactory, key, domain, destinations,
+        quorumSize, writeLock);
+    } catch (IOException e) {
+      IOUtils.closeQuietly(stream);
+      throw e;
     }
-    throw lastException;
   }
 
   OutputStream getOutputStream() {
@@ -87,6 +81,8 @@ class GetOutputStreamCommand implements MojiCommand {
     builder.append(key);
     builder.append(", storageClass=");
     builder.append(storageClass);
+    builder.append(", durableWrite=");
+    builder.append(quorumSize > 1);
     builder.append("]");
     return builder.toString();
   }

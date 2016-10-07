@@ -54,6 +54,18 @@ public interface Moji {
   MojiFile getFile(String key, String storageClass);
 
   /**
+   * Creates an abstract representation of a remote MogileFS file for the given key. The way to write file is
+   * assigned by writeStrategy. The way to retain file is assigned by storageClass. Note that above two parameters has
+   * no effect when reading files.
+   *
+   * @param key MogileFS file key.
+   * @param storageClass The storage class to which a new file will be assigned.
+   * @param writeStrategy The way it will to be used to write the file. Default is WriteStrategy.DEFAULT.
+   * @return Representation of the remote file.
+   */
+  MojiFile getFile(String key, String storageClass, WriteStrategy writeStrategy);
+
+  /**
    * Copies a local source file to the given remote MogileFS destination file.
    * 
    * @param source The local source file.

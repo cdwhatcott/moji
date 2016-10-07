@@ -35,6 +35,8 @@ public interface Tracker {
 
   void createClose(String key, String domain, Destination destination, long size) throws TrackerException;
 
+  void createClose(String key, String domain, List<Destination> destinations, long size) throws TrackerException;
+
   /**
    * Delete a key from MogileFS in the given domain.
    * 

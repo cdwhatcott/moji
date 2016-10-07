@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import fm.last.moji.WriteStrategy;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.math.RandomUtils;
@@ -44,6 +45,7 @@ abstract public class AbstractMojiIT {
   String keyPrefix;
   String storageClassA;
   String storageClassB;
+  String storageClassDevcount2;
 
   @Before
   public void setUp() throws Exception {
@@ -60,6 +62,7 @@ abstract public class AbstractMojiIT {
     keyPrefix = properties.getProperty("test.moji.key.prefix");
     storageClassA = properties.getProperty("test.moji.class.a");
     storageClassB = properties.getProperty("test.moji.class.b");
+    storageClassDevcount2 = properties.getProperty("test.moji.class.devcount2");
 
     moji = new SpringMojiBean();
     moji.setAddressesCsv(hosts);
@@ -117,6 +120,12 @@ abstract public class AbstractMojiIT {
 
   MojiFile getFile(String key, String storageClass) {
     MojiFile file = moji.getFile(key, storageClass);
+    mojiFiles.add(file);
+    return file;
+  }
+
+  MojiFile getFile(String key, String storageClass, WriteStrategy writeStrategy) {
+    MojiFile file = moji.getFile(key, storageClass, writeStrategy);
     mojiFiles.add(file);
     return file;
   }

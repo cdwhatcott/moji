@@ -96,6 +96,23 @@ class TrackerImpl implements Tracker {
   }
 
   @Override
+  public void createClose(String key, String domain, List<Destination> destinations, long size)
+    throws TrackerException {
+    Builder builder = new Builder(5 + destinations.size() * 2).command("create_close").arg("domain", domain)
+      .arg("key", key).arg("fid", destinations.get(0).getFid()).arg("size", size)
+      .arg("dev_count", destinations.size());
+
+    for (int i = 0; i < destinations.size(); i++) {
+      Destination destination = destinations.get(i);
+      builder.arg("path_" + (i + 1), destination.getPath()).arg("devid_" + (i + 1), destination.getDevId());
+    }
+
+    Request request = builder.build();
+    Response response = requestHandler.performRequest(request);
+    handleGeneralResponseError(response);
+  }
+
+  @Override
   public void delete(String key, String domain) throws TrackerException {
     Request request = new Request.Builder(2).command("delete").arg("domain", domain).arg("key", key).build();
     Response response = requestHandler.performRequest(request);

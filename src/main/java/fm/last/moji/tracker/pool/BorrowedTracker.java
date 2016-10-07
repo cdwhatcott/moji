@@ -94,6 +94,18 @@ class BorrowedTracker implements Tracker {
   }
 
   @Override
+  public void createClose(String key, String domain, List<Destination> destinations, long size)
+    throws TrackerException {
+    try {
+      delegate.createClose(key, domain, destinations, size);
+      host.markSuccess();
+    } catch (CommunicationException e) {
+      lastException = e;
+      throw e;
+    }
+  }
+
+  @Override
   public void delete(String key, String domain) throws TrackerException {
     try {
       delegate.delete(key, domain);

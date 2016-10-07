@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import fm.last.moji.WriteStrategy;
 import org.apache.commons.io.FileUtils;
 
 import fm.last.moji.Moji;
@@ -67,6 +68,12 @@ public class LocalFileSystemMoji implements Moji {
 
   @Override
   public MojiFile getFile(String key, String storageClass) {
+    return new LocalMojiFile(namingStrategy, baseFolder, domain, key, storageClass);
+  }
+
+  @Override
+  public MojiFile getFile(String key, String storageClass, WriteStrategy writeStrategy) {
+    // just ignore writeStrategy here
     return new LocalMojiFile(namingStrategy, baseFolder, domain, key, storageClass);
   }
 
